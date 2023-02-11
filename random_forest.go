@@ -4,42 +4,40 @@ import (
 	"fmt"
 
 	"github.com/sjwhitworth/golearn/base"
-	"github.com/sjwhitworth/golearn/datasets"
 	"github.com/sjwhitworth/golearn/evaluation"
-	"github.com/sjwhitworth/golearn/tree"
+	"github.com/sjwhitworth/golearn/knn"
 )
 
 func main() {
-	iris, err := datasets.LoadIrisDataset()
+	// Load in a dataset, with headers. Header attributes will be stored.
+	// Think of instances as a Data Frame structure in R or Pandas.
+	// You can also create instances from scratch.
+
+	rawData, err := base.ParseCSVToInstances("datasets/iris.csv", true)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
-	// Load the iris dataset into the Instances structure
-	irisInstances := base.NewDenseInstances()
-	irisInstances.AddAttr("sepal_length", base.AttributeContinuous)
-	irisInstances.AddAttr("sepal_width", base.AttributeContinuous)
-	irisInstances.AddAttr("petal_length", base.AttributeContinuous)
-	irisInstances.AddAttr("petal_width", base.AttributeContinuous)
-	irisInstances.AddClassAttribute("class", base.AttributeClass, []string{"setosa", "versicolor", "virginica"})
+	// Print a pleasant summary of your data.
+	fmt.Println(rawData)
 
-	for i := 0; i < len(iris); i++ {
-		irisInstances.AddInstance(base.NewDenseInstance(iris[i][:4], iris[i][4:]))
-	}
+	//Initialises a new KNN classifier
+	cls := knn.NewKnnClassifier("euclidean", "linear", 2)
 
-	// Create a Random Forest model
-	rf := tree.NewRandomForest(10, 4)
+	//Do a training-test split
+	trainData, testData := base.InstancesTrainTestSplit(rawData, 0.50)
+	cls.Fit(trainData)
 
-	// Train the model on the iris dataset
-	rf.Fit(irisInstances)
-
-	// Evaluate the model using cross-validation
-	cv, err := evaluation.GenerateCrossFoldValidationConfusionMatrix(irisInstances, rf, 10)
+	//Calculates the Euclidean distance and returns the most popular label
+	predictions, err := cls.Predict(testData)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
-	fmt.Println(evaluation.GetSummary(cv))
+	// Prints precision/recall metrics
+	confusionMat, err := evaluation.GetConfusionMatrix(testData, predictions)
+	if err != nil {
+		panic(fmt.Sprintf("Unable to get confusion matrix: %s", err.Error()))
+	}
+	fmt.Println(evaluation.GetSummary(confusionMat))
 }
