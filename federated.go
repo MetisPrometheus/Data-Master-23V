@@ -1,17 +1,13 @@
 package main
 
 import (
-	"bufio"
-	"encoding/gob"
 	"fmt"
 	"math"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
-	"github.com/dmlc/xgboost/dynamic"
 )
 
 func main() {
@@ -28,33 +24,6 @@ func main() {
 	//
 	//
 	//
-
-	// Load the parameters from disk
-	file2, err2 := os.Open("xgboost_params.pkl")
-	if err2 != nil {
-		panic(err2)
-	}
-	defer file2.Close()
-	reader := bufio.NewReader(file2)
-	decoder := gob.NewDecoder(reader)
-	var params map[string]interface{}
-	if err := decoder.Decode(&params); err != nil {
-		panic(err)
-	}
-
-	// Load the weights from disk
-	file3, err3 := os.Open("xgboost.model")
-	if err3 != nil {
-		panic(err3)
-	}
-	defer file3.Close()
-	reader = bufio.NewReader(file3)
-	handle, err := dynamic.LoadXGBoostFromJSON("xgboost.model", "/path/to/libxgboost.so")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(model)
 
 }
 
