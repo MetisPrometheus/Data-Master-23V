@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/catboost/catboost-go/v2/catboost"
 )
 
 func main() {
@@ -25,6 +26,11 @@ func main() {
 	//
 	//
 
+	// Load the saved model
+	model, err := catboost.NewCatBoostClassifier(catboost.NewCatBoostClassifierParams{FileName: "my_model.cbm"})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func preprocess(rows [][]string) [][]float64 {
