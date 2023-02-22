@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
-	"github.com/catboost/catboost-go/v2/catboost"
+	"gonum.org/v1/gonum/floats"
+	"gonum.org/v1/gonum/mat"
+	"gonum.org/v1/gonum/stat"
 )
 
 func main() {
@@ -20,20 +22,25 @@ func main() {
 	}
 	// Get all the rows in the first sheet and preprocess the data
 	rows := file.GetRows("Sheet1")
-	var data = preprocess(rows)
-	fmt.Println(data[0][0])
+	inputs, labels := preprocess(rows)
+	fmt.Println(len(inputs))
+	fmt.Println(len(labels))
 	//
 	//
 	//
 
-	// Load the saved model
-	model, err := catboost.NewCatBoostClassifier(catboost.NewCatBoostClassifierParams{FileName: "my_model.cbm"})
-	if err != nil {
-		panic(err)
-	}
+	// Train a random forest model with 3 trees.
+	rf := r.NewRandomForest(10, len(labels), nil, nil)
+	rf.Train(inputs, floats.Vectorize(nil, labels))
+
+	// Predict the label for a new sample.
+	sample := inputs[30]
+	prediction := rf.Predict(mat.NewVecDense(2, sample))
+	fmt.Println("Prediction:", stat.Round(prediction))
+
 }
 
-func preprocess(rows [][]string) [][]float64 {
+func preprocess(rows [][]string) ([][]float64, []string) {
 	// prepare variable for transformed dataset
 	var floatData [][]float64
 	var columnCounter [231]float64
@@ -92,5 +99,20 @@ func preprocess(rows [][]string) [][]float64 {
 		}
 	}
 
-	return floatData
+	var labels = append(rows[0], "MISSING_COUNTER")
+
+	return floatData, labels
+}
+
+// Converts a [][]float64 slice to a [][]interface{} slice
+func toInterface(inputs [][]float64) [][]interface{} {
+	output := make([][]interface{}, len(inputs))
+	for i, row := range inputs {
+		interfaceRow := make([]interface{}, len(row))
+		for j, val := range row {
+			interfaceRow[j] = val
+		}
+		output[i] = interfaceRow
+	}
+	return output
 }
